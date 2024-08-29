@@ -5,4 +5,4 @@ module.exports = {
     '^@/components/(.*)$': '<rootDir>/src/components/$1',
     '^@/pages/(.*)$': '<rootDir>/src/pages/$1',
   },
-}
+};
