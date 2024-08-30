@@ -90,3 +90,58 @@ export async function sendVerificationEmail(to: string, token: string) {
     throw new Error('Failed to send verification email');
   }
 }
+
+export async function sendPasswordResetEmail(to: string, token: string) {
+  const resetUrl = `${process.env.NEXTAUTH_URL}/reset-password?token=${token}`;
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Reset Your Password</title>
+      <style>
+        /* ... (use the same styles as in sendVerificationEmail) ... */
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h1>Reset Your Password</h1>
+        <p>You have requested to reset your password. Click the button below to set a new password:</p>
+        <a href="${resetUrl}" class="button">Reset Password</a>
+        <p>If you didn't request a password reset, you can safely ignore this email.</p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const message = {
+    senderAddress: process.env.FROM_EMAIL as string,
+    content: {
+      subject: 'Reset your password',
+      plainText: `You have requested to reset your password. Please visit this link to set a new password: ${resetUrl}`,
+      html: htmlContent,
+    },
+    recipients: {
+      to: [
+        {
+          address: to,
+          displayName: 'User',
+        },
+      ],
+    },
+  };
+
+  try {
+    const poller = await emailClient.beginSend(message);
+    const response = await poller.pollUntilDone();
+    console.log('Password reset email sent successfully', response);
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    if (error.response) {
+      console.error('Azure API responded with:', error.response);
+    }
+    throw new Error('Failed to send password reset email');
+  }
+}

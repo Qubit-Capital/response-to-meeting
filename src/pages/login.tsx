@@ -4,7 +4,12 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  CardFooter,
+} from '@/components/ui/card';
 
 export default function SignIn() {
   const [email, setEmail] = useState('');
@@ -44,7 +49,9 @@ export default function SignIn() {
       const data = await response.json();
 
       if (response.ok) {
-        setError('Verification email sent successfully. Please check your inbox.');
+        setError(
+          'Verification email sent successfully. Please check your inbox.'
+        );
       } else {
         setError(data.message || 'Error resending verification email');
       }
@@ -62,7 +69,10 @@ export default function SignIn() {
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium text-gray-700">
+              <label
+                htmlFor="email"
+                className="text-sm font-medium text-gray-700"
+              >
                 Email
               </label>
               <Input
@@ -75,7 +85,10 @@ export default function SignIn() {
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium text-gray-700">
+              <label
+                htmlFor="password"
+                className="text-sm font-medium text-gray-700"
+              >
                 Password
               </label>
               <Input
@@ -86,6 +99,11 @@ export default function SignIn() {
                 required
                 className="w-full"
               />
+            </div>
+            <div className="text-right">
+              <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
+                Forgot Password?
+              </Link>
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
           </CardContent>

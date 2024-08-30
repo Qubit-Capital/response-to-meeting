@@ -3,7 +3,10 @@ import clientPromise from '@/lib/mongodb';
 import { sendVerificationEmail } from '@/services/emailService';
 import crypto from 'crypto';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
@@ -28,10 +31,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const verificationToken = crypto.randomBytes(32).toString('hex');
-    await db.collection('users').updateOne(
-      { _id: user._id },
-      { $set: { emailVerificationToken: verificationToken } }
-    );
+    await db
+      .collection('users')
+      .updateOne(
+        { _id: user._id },
+        { $set: { emailVerificationToken: verificationToken } }
+      );
 
     await sendVerificationEmail(email, verificationToken);
 

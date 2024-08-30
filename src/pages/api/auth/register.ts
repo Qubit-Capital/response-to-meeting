@@ -53,7 +53,7 @@ export default async function handler(
     res.status(201).json({
       message: 'User created successfully',
       userId: result.insertedId,
-      redirectTo: `/verify-request?email=${encodeURIComponent(email)}` 
+      redirectTo: `/verify-request?email=${encodeURIComponent(email)}`,
     });
   } catch (error) {
     console.error('Registration error:', error);

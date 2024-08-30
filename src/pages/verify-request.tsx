@@ -19,7 +19,9 @@ export default function VerifyRequest() {
       const data = await response.json();
 
       if (response.ok) {
-        setMessage('Verification email sent successfully. Please check your inbox.');
+        setMessage(
+          'Verification email sent successfully. Please check your inbox.'
+        );
       } else {
         setMessage(data.message || 'Error resending verification email');
       }
@@ -35,7 +37,8 @@ export default function VerifyRequest() {
           Verify Your Email
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          We&apos;ve sent a verification email to {email}. Please check your inbox and click the verification link.
+          We&apos;ve sent a verification email to {email}. Please check your
+          inbox and click the verification link.
         </p>
         <div className="mt-5">
           <Button onClick={handleResendVerification} className="w-full">
