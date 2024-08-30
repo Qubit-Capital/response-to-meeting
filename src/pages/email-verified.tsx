@@ -6,8 +6,8 @@ const EmailVerifiedPage: NextPage = () => {
     <div className="container mx-auto mt-8 text-center">
       <h1 className="text-2xl font-bold mb-4">Email Verified</h1>
       <p className="mb-4">Your email has been successfully verified.</p>
-      <Link href="/login">
-        <a className="text-blue-500 hover:underline">Click here to sign in</a>
+      <Link href="/login" className="text-blue-500 hover:underline">
+        Click here to sign in
       </Link>
     </div>
   );

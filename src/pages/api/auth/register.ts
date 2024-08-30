@@ -50,12 +50,11 @@ export default async function handler(
 
     await sendVerificationEmail(email, verificationToken);
 
-    res
-      .status(201)
-      .json({
-        message: 'User created successfully',
-        userId: result.insertedId,
-      });
+    res.status(201).json({
+      message: 'User created successfully',
+      userId: result.insertedId,
+      redirectUrl: '/verify-request'
+    });
   } catch (error) {
     console.error('Registration error:', error);
     res.status(500).json({ message: 'Internal server error' });

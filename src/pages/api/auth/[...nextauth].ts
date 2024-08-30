@@ -53,6 +53,7 @@ export default NextAuth({
   ],
   session: {
     strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -67,28 +68,30 @@ export default NextAuth({
       }
       return session;
     },
-    async signIn({ user, account }) {
+    async login({ user, account }) {
       if (account?.provider === 'credentials') {
         const client = await clientPromise;
         const db = client.db();
         const dbUser = await db.collection('users').findOne({ _id: user.id });
-        
+
         if (!dbUser.emailVerified) {
           const verificationToken = crypto.randomBytes(32).toString('hex');
-          await db.collection('users').updateOne(
-            { _id: dbUser._id },
-            { $set: { emailVerificationToken: verificationToken } }
-          );
+          await db
+            .collection('users')
+            .updateOne(
+              { _id: dbUser._id },
+              { $set: { emailVerificationToken: verificationToken } }
+            );
           await sendVerificationEmail(dbUser.email, verificationToken);
-          return '/auth/verify-request';
+          return '/verify-request';
         }
       }
       return true;
     },
   },
   pages: {
-    signIn: '/login',
-    verifyRequest: '/auth/verify-request',
+    login: '/login',
+    verifyRequest: '/verify-request',
   },
   debug: process.env.NODE_ENV === 'development',
 });

@@ -1,7 +1,10 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import clientPromise from '@/lib/mongodb';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   if (req.method !== 'GET') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
@@ -16,7 +19,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const client = await clientPromise;
     const db = client.db();
 
-    const user = await db.collection('users').findOne({ emailVerificationToken: token });
+    const user = await db
+      .collection('users')
+      .findOne({ emailVerificationToken: token });
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -24,9 +29,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     await db.collection('users').updateOne(
       { _id: user._id },
-      { 
+      {
         $set: { emailVerified: new Date() },
-        $unset: { emailVerificationToken: "" }
+        $unset: { emailVerificationToken: '' },
       }
     );
 
