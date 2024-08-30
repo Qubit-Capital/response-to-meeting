@@ -1,64 +1,94 @@
-import NextAuth from "next-auth"
-import CredentialsProvider from "next-auth/providers/credentials"
-import { MongoDBAdapter } from "@next-auth/mongodb-adapter"
-import clientPromise from "@/lib/mongodb"
-import { compare } from "bcryptjs"
+import NextAuth from 'next-auth';
+import CredentialsProvider from 'next-auth/providers/credentials';
+import { MongoDBAdapter } from '@next-auth/mongodb-adapter';
+import clientPromise from '@/lib/mongodb';
+import { compare } from 'bcryptjs';
+import { sendVerificationEmail } from '@/services/emailService';
+import crypto from 'crypto';
 
 export default NextAuth({
   adapter: MongoDBAdapter(clientPromise),
   providers: [
     CredentialsProvider({
-      name: "Credentials",
+      name: 'Credentials',
       credentials: {
-        email: { label: "Email", type: "text" },
-        password: { label: "Password", type: "password" }
+        email: { label: 'Email', type: 'text' },
+        password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          return null
+          return null;
         }
 
-        const client = await clientPromise
-        const db = client.db()
-        const user = await db.collection("users").findOne({ email: credentials.email })
+        const client = await clientPromise;
+        const db = client.db();
+        const user = await db
+          .collection('users')
+          .findOne({ email: credentials.email });
 
         if (!user) {
-          return null
+          return null;
         }
 
-        const isPasswordValid = await compare(credentials.password, user.password)
+        const isPasswordValid = await compare(
+          credentials.password,
+          user.password
+        );
 
         if (!isPasswordValid) {
-          return null
+          return null;
+        }
+
+        if (!user.emailVerified) {
+          throw new Error('EMAIL_NOT_VERIFIED');
         }
 
         return {
           id: user._id.toString(),
           email: user.email,
-          name: user.name
-        }
-      }
-    })
+          name: user.name,
+        };
+      },
+    }),
   ],
   session: {
-    strategy: "jwt"
+    strategy: 'jwt',
   },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id
+        token.id = user.id;
       }
-      return token
+      return token;
     },
     async session({ session, token }) {
       if (token) {
-        session.user.id = token.id
+        session.user.id = token.id;
       }
-      return session
-    }
+      return session;
+    },
+    async signIn({ user, account }) {
+      if (account?.provider === 'credentials') {
+        const client = await clientPromise;
+        const db = client.db();
+        const dbUser = await db.collection('users').findOne({ _id: user.id });
+        
+        if (!dbUser.emailVerified) {
+          const verificationToken = crypto.randomBytes(32).toString('hex');
+          await db.collection('users').updateOne(
+            { _id: dbUser._id },
+            { $set: { emailVerificationToken: verificationToken } }
+          );
+          await sendVerificationEmail(dbUser.email, verificationToken);
+          return '/auth/verify-request';
+        }
+      }
+      return true;
+    },
   },
   pages: {
-    signIn: "/login",
+    signIn: '/login',
+    verifyRequest: '/auth/verify-request',
   },
-  debug: process.env.NODE_ENV === "development",
-})
+  debug: process.env.NODE_ENV === 'development',
+});
