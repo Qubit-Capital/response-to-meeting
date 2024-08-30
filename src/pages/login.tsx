@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -10,31 +10,46 @@ export default function SignIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login, user, isLoading } = useAuth();
   const router = useRouter();
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  if (user) {
-    router.push('/dashboard');
-    return null;
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    try {
-      await login(email, password);
-      router.push('/dashboard');
-    } catch (err: any) {
-      if (err.message === 'EMAIL_NOT_VERIFIED') {
+    const result = await signIn('credentials', {
+      redirect: false,
+      email,
+      password,
+    });
+
+    if (result?.error) {
+      if (result.error === 'EMAIL_NOT_VERIFIED') {
         setError('Please verify your email before signing in.');
       } else {
         setError('Invalid email or password');
       }
+    } else {
+      router.push('/dashboard');
+    }
+  };
+
+  const handleResendVerification = async () => {
+    try {
+      const response = await fetch('/api/auth/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setError('Verification email sent successfully. Please check your inbox.');
+      } else {
+        setError(data.message || 'Error resending verification email');
+      }
+    } catch (error) {
+      setError('An error occurred. Please try again.');
     }
   };
 
@@ -84,6 +99,13 @@ export default function SignIn() {
                 Create an account
               </Link>
             </p>
+            <button
+              type="button"
+              onClick={handleResendVerification}
+              className="text-sm text-blue-600 hover:underline"
+            >
+              Resend Verification Email
+            </button>
           </CardFooter>
         </form>
       </Card>

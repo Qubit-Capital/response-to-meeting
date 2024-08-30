@@ -49,7 +49,7 @@ const RegisterPage: React.FC = () => {
 
       if (res.status === 201) {
         console.log('Registration successful, redirecting to /verify-request');
-        router.push('/verify-request');
+        router.push(data.redirectTo);
       } else {
         console.error('Registration failed:', data.message);
         setError(data.message || 'An error occurred during registration');
