@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -10,26 +10,31 @@ export default function SignIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const { login, user, isLoading } = useAuth();
   const router = useRouter();
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (user) {
+    router.push('/dashboard');
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    const result = await signIn('credentials', {
-      redirect: false,
-      email,
-      password,
-    });
-
-    if (result?.error) {
-      if (result.error === 'EMAIL_NOT_VERIFIED') {
+    try {
+      await login(email, password);
+      router.push('/dashboard');
+    } catch (err: any) {
+      if (err.message === 'EMAIL_NOT_VERIFIED') {
         setError('Please verify your email before signing in.');
       } else {
         setError('Invalid email or password');
       }
-    } else {
-      router.push('/dashboard');
     }
   };
 

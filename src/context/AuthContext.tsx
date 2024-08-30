@@ -1,15 +1,11 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-}
+import React, { createContext, useContext, ReactNode } from 'react';
+import { useSession, signIn, signOut } from 'next-auth/react';
 
 interface AuthContextType {
-  user: User | null;
-  login: (userData: User) => void;
-  logout: () => void;
+  user: any;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -17,18 +13,25 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const { data: session, status } = useSession();
 
-  const login = (userData: User) => {
-    setUser(userData);
+  const login = async (email: string, password: string) => {
+    await signIn('credentials', { email, password });
   };
 
-  const logout = () => {
-    setUser(null);
+  const logout = async () => {
+    await signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        user: session?.user ?? null,
+        login,
+        logout,
+        isLoading: status === 'loading',
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -3,8 +3,6 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import { MongoDBAdapter } from '@next-auth/mongodb-adapter';
 import clientPromise from '@/lib/mongodb';
 import { compare } from 'bcryptjs';
-import { sendVerificationEmail } from '@/services/emailService';
-import crypto from 'crypto';
 
 export default NextAuth({
   adapter: MongoDBAdapter(clientPromise),
@@ -68,30 +66,10 @@ export default NextAuth({
       }
       return session;
     },
-    async login({ user, account }) {
-      if (account?.provider === 'credentials') {
-        const client = await clientPromise;
-        const db = client.db();
-        const dbUser = await db.collection('users').findOne({ _id: user.id });
-
-        if (!dbUser.emailVerified) {
-          const verificationToken = crypto.randomBytes(32).toString('hex');
-          await db
-            .collection('users')
-            .updateOne(
-              { _id: dbUser._id },
-              { $set: { emailVerificationToken: verificationToken } }
-            );
-          await sendVerificationEmail(dbUser.email, verificationToken);
-          return '/verify-request';
-        }
-      }
-      return true;
-    },
   },
   pages: {
-    login: '/login',
-    verifyRequest: '/verify-request',
+    signIn: '/login',
+    error: '/login', // Add this line
   },
   debug: process.env.NODE_ENV === 'development',
 });

@@ -1,19 +1,17 @@
 import React from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/context/AuthContext';
 import LogoutButton from '@/components/LogoutButton';
 
 const Dashboard: React.FC = () => {
-  const { data: session } = useSession();
+  const { user } = useAuth();
 
   return (
     <div>
       <h1>Dashboard</h1>
-      <p>Welcome, {session?.user?.name || session?.user?.email}</p>
+      <p>Welcome, {user?.name || user?.email}</p>
       <LogoutButton />
     </div>
   );
 };
-
-Dashboard.auth = true;
 
 export default Dashboard;
