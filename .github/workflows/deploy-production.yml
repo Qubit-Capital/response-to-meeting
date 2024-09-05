@@ -1,0 +1,29 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install SSH Client
+      run: sudo apt-get install openssh-client -y
+    - name: Deploy to Production
+      env:
+        PEM_FILE: ${{ secrets.SERVER_PEM_FILE }}
+        HOST: ${{ secrets.SERVER_IP }}
+        USER: azureuser
+      run: |
+        echo "$PEM_FILE" > server_key.pem
+        chmod 600 server_key.pem
+        ssh -o StrictHostKeyChecking=no -i server_key.pem ${USER}@${HOST} '
+          cd qubit_app/response-to-meeting/production/response-to-meeting &&
+          git pull origin development &&
+          npm install &&
+          npm run build &&
+          pm2 restart rtm || pm2 start npm --name "rtm" -- start -- -p 3006
+        '
+        rm -f server_key.pem
