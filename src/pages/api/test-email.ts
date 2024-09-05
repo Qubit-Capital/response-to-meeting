@@ -22,6 +22,6 @@ export default async function handler(
     console.error('Error sending test email:', error);
     res
       .status(500)
-      .json({ message: 'Error sending test email', error: error.message });
+      .json({ message: 'Error sending test email', error: error instanceof Error ? error.message : 'An unknown error occurred' });
   }
 }

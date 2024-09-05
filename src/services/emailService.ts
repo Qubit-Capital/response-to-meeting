@@ -82,10 +82,10 @@ export async function sendVerificationEmail(to: string, token: string) {
     const poller = await emailClient.beginSend(message);
     const response = await poller.pollUntilDone();
     console.log('Verification email sent successfully', response);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error sending verification email:', error);
-    if (error.response) {
-      console.error('Azure API responded with:', error.response);
+    if (typeof error === 'object' && error !== null && 'response' in error) {
+      console.error('Azure API responded with:', (error as { response: unknown }).response);
     }
     throw new Error('Failed to send verification email');
   }
@@ -137,10 +137,10 @@ export async function sendPasswordResetEmail(to: string, token: string) {
     const poller = await emailClient.beginSend(message);
     const response = await poller.pollUntilDone();
     console.log('Password reset email sent successfully', response);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error sending password reset email:', error);
-    if (error.response) {
-      console.error('Azure API responded with:', error.response);
+    if (typeof error === 'object' && error !== null && 'response' in error) {
+      console.error('Azure API responded with:', (error as { response: unknown }).response);
     }
     throw new Error('Failed to send password reset email');
   }
