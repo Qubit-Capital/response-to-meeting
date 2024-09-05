@@ -8,32 +8,22 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4  # Updated to v4
+    - uses: actions/checkout@v2
     - name: Install SSH Client
       run: sudo apt-get install openssh-client -y
-    - name: Debug SSH Connection
+    - name: Deploy to Staging
       env:
         PEM_FILE: ${{ secrets.SERVER_PEM_FILE }}
         HOST: ${{ secrets.SERVER_IP }}
         USER: azureuser
       run: |
-        echo "Setting up SSH key"
         echo "$PEM_FILE" > server_key.pem
         chmod 600 server_key.pem
-        
-        echo "Attempting to connect to server"
-        ssh -o StrictHostKeyChecking=no -i server_key.pem ${USER}@${HOST} 'echo "SSH connection successful"'
-        
-        echo "Checking directory"
-        ssh -o StrictHostKeyChecking=no -i server_key.pem ${USER}@${HOST} 'cd qubit_app/response-to-meeting/staging/response-to-meeting && pwd'
-        
-        echo "Checking git status"
-        ssh -o StrictHostKeyChecking=no -i server_key.pem ${USER}@${HOST} 'cd qubit_app/response-to-meeting/staging/response-to-meeting && git status'
-        
-        echo "Checking Node.js and npm versions"
-        ssh -o StrictHostKeyChecking=no -i server_key.pem ${USER}@${HOST} 'node -v && npm -v'
-        
-        echo "Checking PM2 status"
-        ssh -o StrictHostKeyChecking=no -i server_key.pem ${USER}@${HOST} 'pm2 list'
-        
+        ssh -o StrictHostKeyChecking=no -i server_key.pem ${USER}@${HOST} '
+          cd qubit_app/response-to-meeting/staging/response-to-meeting &&
+          git pull origin development &&
+          npm install &&
+          npm run build &&
+          pm2 restart staging-rtm-app || pm2 start npm --name "staging-rtm-app" -- start -- -p 3005
+        '
         rm -f server_key.pem
