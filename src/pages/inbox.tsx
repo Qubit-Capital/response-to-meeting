@@ -9,8 +9,11 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
+import { useAuth } from '@/context/AuthContext'
+import LogoutButton from '@/components/LogoutButton'
 
 const Inbox: React.FC = () => {
+  const { user } = useAuth();
   const emails = [
     { id: 1, from: 'William Smith', subject: 'Meeting Tomorrow', preview: `Hi, let's have a meeting tomorrow to discuss the project. I've been reviewing the project details and have some ideas I'd like to share. It's...`, date: '11 months ago', tags: ['meeting', 'work', 'important'] },
     { id: 2, from: 'Alice Smith', subject: 'Re: Project Update', preview: `Thank you for the project update. It looks great! I've gone through the report, and the progress is impressive. The team has done a fantastic job...`, date: '11 months ago', tags: ['work', 'important'] },
@@ -38,7 +41,9 @@ const Inbox: React.FC = () => {
       {/* Sidebar */}
       <ResizablePanel defaultSize={20} minSize={15}>
         <div className="bg-gray-100 p-4 h-full">
-          <h2 className="text-lg font-semibold mb-4">Alicia Koch</h2>
+          <h2 className="text-lg font-semibold mb-4">
+            {user?.name || user?.email || 'User'}
+          </h2>
           <nav>
             <Button variant="ghost" className="w-full justify-start mb-1">
               <span className="mr-2">📥</span> Inbox <Badge className="ml-auto">128</Badge>
@@ -58,13 +63,10 @@ const Inbox: React.FC = () => {
             <Button variant="ghost" className="w-full justify-start mb-1">
               <span className="mr-2">🗃️</span> Archived
             </Button>
-            <Button variant="ghost" className="w-full justify-start mb-1">
-              <span className="mr-2">🗑️</span> Junk <Badge className="ml-auto">23</Badge>
-            </Button>
-            <Button variant="ghost" className="w-full justify-start mb-1">
-              <span className="mr-2">🗑️</span> Trash
-            </Button>
           </nav>
+          <div className="mt-4">
+            <LogoutButton />
+          </div>
         </div>
       </ResizablePanel>
 
