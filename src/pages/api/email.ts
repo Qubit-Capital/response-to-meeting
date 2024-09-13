@@ -23,16 +23,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const collection = db.collection('emails');
 
       const page = parseInt(req.query.page as string) || 1;
+      const search = req.query.search as string;
       const skip = (page - 1) * ITEMS_PER_PAGE;
 
+      let query = {};
+      if (search) {
+        query = {
+          $or: [
+            { from_email: { $regex: search, $options: 'i' } },
+            { subject: { $regex: search, $options: 'i' } },
+            { sent_message_text: { $regex: search, $options: 'i' } }
+          ]
+        };
+      }
+
       const emails = await collection
-        .find({})
+        .find(query)
         .sort({ event_timestamp: -1 })
         .skip(skip)
         .limit(ITEMS_PER_PAGE)
         .toArray();
 
-      const totalEmails = await collection.countDocuments();
+      const totalEmails = await collection.countDocuments(query);
       const totalPages = Math.ceil(totalEmails / ITEMS_PER_PAGE);
 
       res.status(200).json({

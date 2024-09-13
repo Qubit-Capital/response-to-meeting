@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-import Sidebar from '@/components/Sidebar';
+import Sidebar from '@/components/SideBar';
 import TopBar from '@/components/TopBar';
 import EmailList from '@/components/EmailList';
 import EmailDetails from '@/components/EmailDetails';
@@ -13,11 +13,12 @@ const Inbox: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const fetchEmails = async (page: number) => {
+  const fetchEmails = async (page: number, search: string = '') => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/email?page=${page}`);
+      const response = await fetch(`/api/email?page=${page}&search=${encodeURIComponent(search)}`);
       if (!response.ok) {
         throw new Error('Failed to fetch emails');
       }
@@ -33,8 +34,8 @@ const Inbox: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchEmails(currentPage);
-  }, [currentPage]);
+    fetchEmails(currentPage, searchQuery);
+  }, [currentPage, searchQuery]);
 
   const handleSelectEmail = (email: Email) => {
     setSelectedEmail(email);
@@ -52,42 +53,49 @@ const Inbox: React.FC = () => {
     }
   };
 
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
+  };
+
   return (
-    <ResizablePanelGroup direction="horizontal" className="h-screen">
-      {/* Sidebar */}
-      <ResizablePanel defaultSize={20} minSize={15}>
-        <Sidebar />
-      </ResizablePanel>
+    <div className="h-screen">
+      <ResizablePanelGroup direction="horizontal">
+        {/* Left panel */}
+        <ResizablePanel defaultSize={20} minSize={15}>
+          <Sidebar />
+        </ResizablePanel>
 
-      <ResizableHandle />
+        <ResizableHandle />
 
-      {/* Main content */}
-      <ResizablePanel defaultSize={80}>
-        <div className="flex flex-col h-full">
-          <TopBar />
-          <div className="flex-grow overflow-hidden">
-            {isLoading ? (
-              <div className="flex items-center justify-center h-full">Loading...</div>
-            ) : selectedEmail ? (
-              <EmailDetails email={selectedEmail} />
-            ) : (
-              <>
-                <EmailList emails={emails} onSelectEmail={handleSelectEmail} />
-                <div className="flex justify-between items-center p-4">
-                  <Button onClick={handlePrevPage} disabled={currentPage === 1 || isLoading}>
-                    Previous
-                  </Button>
-                  <span>Page {currentPage} of {totalPages}</span>
-                  <Button onClick={handleNextPage} disabled={currentPage === totalPages || isLoading}>
-                    Next
-                  </Button>
-                </div>
-              </>
-            )}
+        {/* Main content */}
+        <ResizablePanel defaultSize={80}>
+          <div className="h-full flex flex-col">
+            <TopBar onSearch={handleSearch} />
+            <div className="flex-grow overflow-auto">
+              {isLoading ? (
+                <div className="flex items-center justify-center h-full">Loading...</div>
+              ) : selectedEmail ? (
+                <EmailDetails email={selectedEmail} />
+              ) : (
+                <>
+                  <EmailList emails={emails} onSelectEmail={handleSelectEmail} />
+                  <div className="flex justify-between items-center p-4">
+                    <Button onClick={handlePrevPage} disabled={currentPage === 1 || isLoading}>
+                      Previous
+                    </Button>
+                    <span>Page {currentPage} of {totalPages}</span>
+                    <Button onClick={handleNextPage} disabled={currentPage === totalPages || isLoading}>
+                      Next
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
-        </div>
-      </ResizablePanel>
-    </ResizablePanelGroup>
+        </ResizablePanel>
+      </ResizablePanelGroup>
+    </div>
   );
 };
 
