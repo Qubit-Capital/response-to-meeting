@@ -6,7 +6,7 @@ export default withAuth(
     const path = req.nextUrl.pathname;
     const isAuth = !!req.nextauth.token;
 
-    const sensitiveRoutes = ['/dashboard'];
+    const sensitiveRoutes = ['/dashboard', '/inbox'];
     const isAccessingSensitiveRoute = sensitiveRoutes.some((route) =>
       path.startsWith(route)
     );
@@ -27,5 +27,5 @@ export default withAuth(
 );
 
 export const config = {
-  matcher: ['/', '/login', '/register', '/dashboard'],
+  matcher: ['/', '/login', '/register', '/dashboard', '/inbox'],
 };
