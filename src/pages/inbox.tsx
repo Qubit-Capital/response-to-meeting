@@ -14,6 +14,10 @@ const Inbox: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [memory, setMemory] = useState<{ categories: string[], prospectNeeds: string[] }>({
+    categories: [],
+    prospectNeeds: []
+  });
 
   const fetchEmails = async (page: number, search: string = '') => {
     setIsLoading(true);
@@ -33,8 +37,25 @@ const Inbox: React.FC = () => {
     }
   };
 
+  const fetchMemory = async () => {
+    try {
+      const response = await fetch('/api/memory');
+      if (!response.ok) {
+        throw new Error('Failed to fetch memory');
+      }
+      const data = await response.json();
+      setMemory({
+        categories: data.categories.map((c: { name: string }) => c.name),
+        prospectNeeds: data.prospectNeeds.map((p: { name: string }) => p.name)
+      });
+    } catch (error) {
+      console.error('Error fetching memory:', error);
+    }
+  };
+
   useEffect(() => {
     fetchEmails(currentPage, searchQuery);
+    fetchMemory();
   }, [currentPage, searchQuery]);
 
   const handleSelectEmail = (email: Email) => {
@@ -58,6 +79,31 @@ const Inbox: React.FC = () => {
     setCurrentPage(1);
   };
 
+  const handleGenerateCase = async (email: Email) => {
+    try {
+      console.log('Sending request to generate case with memory:', memory);
+      const response = await fetch('/api/generate-case', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate case');
+      }
+
+      const data = await response.json();
+      console.log('Generated case:', data.case);
+
+      // Refresh memory after generating case
+      await fetchMemory();
+    } catch (error) {
+      console.error('Error generating case:', error);
+    }
+  };
+
   return (
     <div className="h-screen">
       <ResizablePanelGroup direction="horizontal">
@@ -76,7 +122,7 @@ const Inbox: React.FC = () => {
               {isLoading ? (
                 <div className="flex items-center justify-center h-full">Loading...</div>
               ) : selectedEmail ? (
-                <EmailDetails email={selectedEmail} />
+                <EmailDetails email={selectedEmail} onGenerateCase={handleGenerateCase} />
               ) : (
                 <>
                   <EmailList emails={emails} onSelectEmail={handleSelectEmail} />

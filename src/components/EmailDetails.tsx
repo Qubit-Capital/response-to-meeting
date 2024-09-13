@@ -1,12 +1,14 @@
 import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Email } from '@/models/Email';
+import { Button } from "@/components/ui/button";
 
 interface EmailDetailsProps {
   email: Email;
+  onGenerateCase: (email: Email) => void;
 }
 
-const EmailDetails: React.FC<EmailDetailsProps> = ({ email }) => {
+const EmailDetails: React.FC<EmailDetailsProps> = ({ email, onGenerateCase }) => {
   return (
     <div className="p-4 h-full flex flex-col">
       <div className="mb-4">
@@ -25,7 +27,10 @@ const EmailDetails: React.FC<EmailDetailsProps> = ({ email }) => {
           </>
         )}
       </div>
-      <Input placeholder={`Reply to ${email.from_email}...`} className="w-full" />
+      <div className="flex items-center space-x-2 mb-4">
+        <Input placeholder={`Reply to ${email.from_email}...`} className="flex-grow" />
+        <Button onClick={() => onGenerateCase(email)}>Generate Case</Button>
+      </div>
     </div>
   );
 };

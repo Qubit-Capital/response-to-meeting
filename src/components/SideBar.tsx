@@ -31,6 +31,9 @@ const Sidebar: React.FC = () => {
         <Button variant="ghost" className="w-full justify-start mb-1">
           <span className="mr-2">🗃️</span> Archived
         </Button>
+        <Button variant="ghost" className="w-full justify-start mb-1">
+          <span className="mr-2">📋</span> Cases and Instructions
+        </Button>
       </nav>
       <div className="mt-4">
         <LogoutButton />
