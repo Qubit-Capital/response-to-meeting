@@ -11,4 +11,8 @@ export interface Email {
     reply_message_text: string;
     time_replied: string;
     status: string;
-  }
+    category?: {
+        id: string;
+        name: string;
+    };
+}
