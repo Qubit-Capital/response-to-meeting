@@ -32,12 +32,13 @@ async function getCategories() {
 }
 
 export async function emailCategorizerNode(state: typeof AgentState.State) {
-  try {
+  console.log("state in emailCategorizerNode:", state)
+    try {
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-    const { emailContent, emailId } = state;
+    const { sentMessage, replyMessage, emailId } = state;
     
-    console.log('Email content:', emailContent);
-    console.log('Email ID:', emailId);
+    //console.log('Email content:', emailContent);
+    //console.log('Email ID:', emailId);
 
     if (!emailId) {
       throw new Error('Email ID is undefined');
@@ -48,32 +49,27 @@ export async function emailCategorizerNode(state: typeof AgentState.State) {
     const email = emailResponse.data;
 
     // Check if the email already has a category assigned
-    if (email.category && email.category.id && email.category.name) {
+    /*if (email.category && email.category.id && email.category.name) {
       console.log('Email already categorized:', email.category);
       return {
         category: email.category.name,
         categoryId: email.category.id,
         isNewCategory: false,
         currentStep: "memoryMapping",
+        nextStep: "numberOfResponsesIdentifier",
         emailId
       };
-    }
+    }*/
 
     const categories = await getCategories();
     const categoryList = categories.map((cat: any) => cat.name);
     
-    console.log('Available categories:', categoryList);
+    //console.log('Available categories:', categoryList);
 
     const strictModel = createStrictChatOpenAI([categorizeTool]);
 
     const prompt = `
 You are an AI assistant tasked with categorizing email exchanges between user and prospect. User sent a message and got reply from the prospect. Follow the instructions below to assign the most appropriate category from the predefined list or create a new one.
-
-Email Exchange:
-${emailContent}
-
-Predefined Categories:
-${categoryList.join(", ")}
 
 Instructions:
 - If reply message is not in english, always categorize it as 'Non English'. If the category is not defined in the predefined categories list, create it as new one.
@@ -83,6 +79,15 @@ Instructions:
 - If none of the predefined categories fit well, suggest a new category. Be open to suggest new categories even if there's a somewhat matching category in the list but it could not fully capture the essence.
 - If the predefined categories list has less than 9 categories, be more open to create a new category.
 - If multiple categories seem relevant, select the most relevant one.
+
+Reply Message:
+${replyMessage}
+
+Predefined Categories:
+${categoryList.join(", ")}
+
+Sent Message from user (just for additional context):
+${sentMessage}
 `;
 
     //console.log('Invoking OpenAI model...');
@@ -134,6 +139,7 @@ Instructions:
       categoryId,
       isNewCategory: !categoryExists,
       currentStep: "memoryMapping",
+      nextStep: "numberOfResponsesIdentifier",
       emailId
     };
   } catch (error) {

@@ -1,39 +1,21 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { MongoClient, Db, ObjectId } from 'mongodb';
-
-let cachedDb: Db | null = null;
-
-async function connectToDatabase() {
-  if (cachedDb) {
-    return cachedDb;
-  }
-
-  const client = await MongoClient.connect(process.env.DATABASE_URL as string);
-  const db = client.db('response-to-meeting');
-  cachedDb = db;
-  return db;
-}
-
-interface LAMEntry {
-  _id?: ObjectId;
-  actor: string;
-  category: string;
-  instruction: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { connectToDatabase } from '@/lib/mongodb';
+import { ILearningActingMemory } from "@/models/LearningActingMemory";
+import { ObjectId } from 'mongodb';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const db = await connectToDatabase();
-  const collection = db.collection<LAMEntry>('lam');
+  const collection = db.collection<ILearningActingMemory>('lam');
 
   switch (req.method) {
     case 'GET':
       try {
         const { actor, category } = req.query;
-        let query = {};
-        if (actor) query = { ...query, actor };
-        if (category) query = { ...query, category };
+        let query: any = {};
+        if (actor) query.actor = actor;
+        if (category) {
+          query['categories.id'] = category;
+        }
         
         const entries = await collection.find(query).toArray();
         res.status(200).json(entries);
@@ -44,31 +26,59 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     case 'POST':
       try {
-        const { actor, category, instruction } = req.body;
-        if (!actor || !category || !instruction) {
+        const { actor, scenario, categories, instruction } = req.body;
+        console.log('Received POST request with body:', JSON.stringify(req.body, null, 2));
+
+        if (!actor || !scenario || !categories || !instruction) {
+          console.log('Missing required fields');
           return res.status(400).json({ error: 'Missing required fields' });
         }
 
-        const newEntry: LAMEntry = {
+        let validatedCategories;
+        if (Array.isArray(categories) && categories.length === 1 && categories[0] === '*') {
+          validatedCategories = [{ id: '*', name: 'All Categories' }];
+        } else if (Array.isArray(categories) && categories.length > 0) {
+          validatedCategories = categories;
+        } else {
+          console.log('Invalid categories:', categories);
+          return res.status(400).json({ error: 'Invalid categories' });
+        }
+
+        const newEntry: Omit<ILearningActingMemory, '_id'> = {
           actor,
-          category,
+          scenario,
+          categories: validatedCategories,
           instruction,
           createdAt: new Date(),
           updatedAt: new Date(),
         };
 
+        console.log('Attempting to insert new entry:', JSON.stringify(newEntry, null, 2));
+
         const result = await collection.insertOne(newEntry);
+        console.log('Insert result:', result);
+
         res.status(201).json({ ...newEntry, _id: result.insertedId });
       } catch (error) {
-        res.status(500).json({ error: 'Error creating LAM entry' });
+        console.error('Error in POST /api/lam:', error);
+        res.status(500).json({ error: 'Error creating LAM entry', details: error.message });
       }
       break;
 
     case 'PUT':
       try {
-        const { id, actor, category, instruction } = req.body;
-        if (!id || !actor || !category || !instruction) {
+        const { id, actor, scenario, categories, instruction } = req.body;
+        if (!id || !actor || !scenario || !categories || !instruction) {
           return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        let validatedCategories;
+        if (Array.isArray(categories) && categories.length === 1 && categories[0] === '*') {
+          validatedCategories = [{ id: '*', name: 'All Categories' }];
+        } else if (Array.isArray(categories) && categories.length > 0) {
+          validatedCategories = categories;
+        } else {
+          return res.status(400).json({ error: 'Invalid categories' });
         }
 
         const result = await collection.findOneAndUpdate(
@@ -76,7 +86,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           { 
             $set: { 
               actor, 
-              category, 
+              scenario,
+              categories: validatedCategories, 
               instruction,
               updatedAt: new Date(),
             } 
