@@ -1,0 +1,101 @@
+---
+config:
+  theme: base
+  look: handDrawn
+---
+
+flowchart TD
+    START["START"] --> A
+
+    %% Input Node
+    A["<b>Input</b><br><u>Function</u>: Pass Email Exchange<br><u>Input</u>: Email Exchange<br><u>Output</u>: Processed Email Content"]
+
+    %% Email Categorizer Node
+    A --> C["<b>Email Categorizer</b><br><u>Function</u>: Assign Category to Email<br><u>Input</u>: Processed Email Content<br><u>Output</u>: Email Category<br><b>(Uses LLM)</b>"]
+
+    %% Initial Memory Mapping Agent
+    C --> MM1["<b>Memory Mapping Agent</b><br>(For Initial Instructions)"]
+
+    %% Number of Responses Identifier
+    MM1 --> E["<b>Number of Responses Identifier</b><br><u>Function</u>: Determine Number of Responses Needed (0-4)<br><u>Input</u>: Validated Instructions, Processed Email Content<br><u>Output</u>: Number of Responses<br><b>(Uses LLM)</b>"]
+
+    E --> Decision2{"Is Number of Responses = 0?"}
+
+    Decision2 -- Yes --> NAR
+
+    Decision2 -- No --> MM2
+
+    %% No Action Required Node
+    NAR["<b>No Action Required</b><br><u>Function</u>: Inform User<br><u>Input</u>: Decision<br><u>Output</u>: Message Sent to User"]
+
+    NAR --> End["Process Completed"]
+
+    %% Memory Mapping Agent before First Response Generator
+    MM2["<b>Memory Mapping Agent</b><br>(For First Response)"]
+
+    MM2 --> F1
+
+    %% First Response Generator
+    F1["<b>First Response Generator</b><br><u>Function</u>: Generate First Response<br><u>Input</u>: Validated Instructions, Email Category, Processed Email Content<br><u>Output</u>: First Response<br><b>(Uses LLM)</b>"]
+
+    F1 --> F2
+
+    %% First Response Validator
+    F2["<b>First Response Validator</b><br><u>Function</u>: Validate First Response<br><u>Input</u>: First Response<br><u>Output</u>: Approval Decision and Feedback<br><b>(Uses LLM)</b>"]
+
+    F2 --> Decision3{"Is First Response Approved?"}
+
+    Decision3 -- Yes --> Decision4
+
+    Decision3 -- No | Issue &amp; Improvements --> MM2
+
+    %% Check if Follow-up Responses are Needed
+    Decision4{"Are Follow-up Responses Needed?<br>(No. of responses > 1)"}
+
+    Decision4 -- No --> G
+
+    Decision4 -- Yes --> MM3
+
+    %% Memory Mapping Agent before Follow-up Responses Generator
+    MM3["<b>Memory Mapping Agent</b><br>(For Follow-up Responses)"]
+
+    MM3 --> F3
+
+    %% Follow-up Responses Generator
+    F3["<b>Follow-up Responses Generator</b><br><u>Function</u>: Generate Follow-up Responses<br><u>Input</u>: Validated Instructions, Number of Responses, Email Category, Processed Email Content<br><u>Output</u>: Follow-up Responses<br><b>(Uses LLM)</b>"]
+
+    F3 --> F4
+
+    %% Follow-up Responses Validator
+    F4["<b>Follow-up Responses Validator</b><br><u>Function</u>: Validate Follow-up Responses<br><u>Input</u>: Follow-up Responses<br><u>Output</u>: Approval Decision and Feedback<br><b>(Uses LLM)</b>"]
+
+    F4 --> Decision5{"Are Follow-up Responses Approved?"}
+
+    Decision5 -- Yes --> G
+
+    Decision5 -- No | Issue &amp; Improvements --> MM3
+
+    %% Send to User Node
+    G["<b>Send to User</b><br><u>Function</u>: Send Final Response Sequence<br><u>Input</u>: Approved Response Sequence<br><u>Output</u>: Responses Sent"]
+
+    G --> End
+
+    %% Memory Mapping Agent Subgraph
+    subgraph " "
+        %% Start of Memory Mapping Agent      
+        MM_Agent["<b>Memory Mapping Agent</b><br><u>Function</u>: Map Learning Memories for all Actors<br><u>Input</u>: Processed Email Content, Email Category, Actor<br><u>Output</u>: Validated Instructions<br><b>(Uses LLM)</b><br><br><b><u>START</u></b>"]
+        MM_Agent --> MM_Collector["<b>Memory Collector</b><br><u>Function</u>: Fetch Relevant Memories from Learning Memory<br><u>Input</u>: Processed Email Content, Email Category, Actor, Learning Memory<br><u>Output</u>: Memories<br><b>(Uses LLM)</b>"]
+
+        %% Memory Validator Node
+        MM_Collector --> MM_Validator["<b>Memory Validator</b><br><u>Function</u>: Validate Memories<br><u>Input</u>: Memories<br><u>Output</u>: Validated Instructions<br>OR<br>Issue &amp; Suggest Improvements"]
+
+        MM_Validator --> MM_Decision1{"Are Memories Relevant for action?"}
+
+        MM_Decision1 -- Yes --> MM_End["Return memories"]
+
+        MM_Decision1 -- No | Issue &amp; Improvements --> MM_Collector
+
+            %% End of Memory Mapping Agent
+        MM_End
+
+    end
