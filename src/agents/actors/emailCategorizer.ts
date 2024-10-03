@@ -25,14 +25,14 @@ const categorizeTool = tool(
 
 async function getCategories() {
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-  console.log(`Fetching categories from: ${baseUrl}/api/categories`);
+  //console.log(`Fetching categories from: ${baseUrl}/api/categories`);
   const response = await axios.get(`${baseUrl}/api/categories`);
-  console.log('Categories fetched:', response.data);
+  //console.log('Categories fetched:', response.data);
   return response.data;
 }
 
 export async function emailCategorizerNode(state: typeof AgentState.State) {
-  console.log("state in emailCategorizerNode:", state)
+  //console.log("state in emailCategorizerNode:", state)
     try {
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
     const { sentMessage, replyMessage, emailId } = state;
@@ -112,14 +112,14 @@ ${sentMessage}
       throw new Error(`Unexpected tool call args type: ${typeof toolCall.args}`);
     }
 
-    console.log('Parsed categorization:', categorization);
+    //console.log('Parsed categorization:', categorization);
 
     // Check if the category exists in our current list
     const categoryExists = categories.some((cat: any) => cat.name.toLowerCase() === categorization.category.toLowerCase());
     
     let categoryId;
     if (!categoryExists) {
-      console.log('Creating new category:', categorization.category);
+      //console.log('Creating new category:', categorization.category);
       const newCategoryResponse = await axios.post(`${baseUrl}/api/categories`, { name: categorization.category });
       categoryId = newCategoryResponse.data.insertedId;
     } else {
@@ -127,7 +127,7 @@ ${sentMessage}
       categoryId = existingCategory._id;
     }
 
-    console.log('Updating email with category:', { categoryId, categoryName: categorization.category });
+    //console.log('Updating email with category:', { categoryId, categoryName: categorization.category });
 
     await axios.patch(`${baseUrl}/api/email/${emailId}`, {
       category: { id: categoryId, name: categorization.category },

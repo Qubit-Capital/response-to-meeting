@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Email } from '@/models/Email';
 
 export async function inputNode(state: typeof AgentState.State) {
-    console.log("state in inputNode:", state)
+    //console.log("state in inputNode:", state)
     try {
         const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
         const emailId = state.emailId;
@@ -12,7 +12,7 @@ export async function inputNode(state: typeof AgentState.State) {
             throw new Error('Email ID is not provided');
         }
 
-    console.log(`Fetching email with ID: ${emailId}`);
+    //console.log(`Fetching email with ID: ${emailId}`);
     
     // Fetch the specific email
     const response = await axios.get<Email>(`${baseUrl}/api/email/${emailId}`);

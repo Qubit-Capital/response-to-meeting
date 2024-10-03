@@ -18,16 +18,16 @@ function getNextStep(currentStep: string): string {
 }
 
 export async function firstResponseGenerator(state: typeof AgentState.State) {
-  console.log("state in firstResponseGenerator:", state);
+  //console.log("state in firstResponseGenerator:", state);
   try {
     const { replyMessage, sentMessage, category, selectedMemories, currentStep } = state;
 
-    console.log("First Response Generator - Reply Message:", replyMessage);
-    console.log("Email Category:", category);
+    //console.log("First Response Generator - Reply Message:", replyMessage);
+    //console.log("Email Category:", category);
     
     // Extract only the instructions from selected memories
     const relevantInstructions = selectedMemories.map(memory => memory.instruction);
-    console.log("Relevant Instructions:", JSON.stringify(relevantInstructions, null, 2));
+    //console.log("Relevant Instructions:", JSON.stringify(relevantInstructions, null, 2));
 
     const strictModel = openai.withStructuredOutput(firstResponseSchema);
 

@@ -47,8 +47,8 @@ async function fetchLearningMemories(actor: string, category: string): Promise<I
 }
 
 async function memoryValidator(scenarios: string[], sentMessage: string, replyMessage: string,strictModel: any): Promise<string[]> {
-  console.log("memoryValidator input - scenarios:", JSON.stringify(scenarios, null, 2));
-  console.log("memoryValidator input - reply message:",replyMessage, "sent message:", sentMessage);
+  //console.log("memoryValidator input - scenarios:", JSON.stringify(scenarios, null, 2));
+  //console.log("memoryValidator input - reply message:",replyMessage, "sent message:", sentMessage);
 
   const validatorPrompt = `
   You are a critical analyzer tasked with validating the relevance of identified scenarios to an email conversation.
@@ -73,18 +73,18 @@ async function memoryValidator(scenarios: string[], sentMessage: string, replyMe
   `;
 
   try {
-    console.log("Invoking strictModel for validation");
+    //console.log("Invoking strictModel for validation");
     const response = await strictModel.invoke([new HumanMessage(validatorPrompt)]);
-    console.log("Validation response:", JSON.stringify(response, null, 2));
+    //console.log("Validation response:", JSON.stringify(response, null, 2));
     return response.scenarios || []; // Change this line
   } catch (error) {
-    console.error("Memory Validator - Error during validation:", error);
+    //console.error("Memory Validator - Error during validation:", error);
     return [];
   }
 }
 
 export async function memoryMappingAgent(state: typeof AgentState.State) {
-  console.log("State in memoryMappingAgent:", JSON.stringify(state, null, 2));
+  //console.log("State in memoryMappingAgent:", JSON.stringify(state, null, 2));
   try {
     const { replyMessage, sentMessage, category, currentStep, emailId, nextStep, categoryId } = state;
     
@@ -104,14 +104,14 @@ export async function memoryMappingAgent(state: typeof AgentState.State) {
         actor = "Unknown Actor";
     }
 
-    console.log(`Memory Mapping Agent - Actor: ${actor}, Category: ${category}, Category ID: ${categoryId}`);
+    //console.log(`Memory Mapping Agent - Actor: ${actor}, Category: ${category}, Category ID: ${categoryId}`);
 
     const learningMemories = await fetchLearningMemories(actor, categoryId);
-    console.log("Available memories:", JSON.stringify(learningMemories, null, 2));
+    //console.log("Available memories:", JSON.stringify(learningMemories, null, 2));
 
     // Extract scenarios from learning memories
     const availableScenarios = learningMemories.map(memory => memory.scenario);
-    console.log("Available scenarios:", JSON.stringify(availableScenarios, null, 2));
+    //console.log("Available scenarios:", JSON.stringify(availableScenarios, null, 2));
 
     const strictModel = openai.withStructuredOutput(scenarioCollectorSchema);
 
@@ -137,40 +137,56 @@ export async function memoryMappingAgent(state: typeof AgentState.State) {
 
     let relevantScenarios: string[] = [];
     if (availableScenarios.length > 0) {
-      console.log("Invoking strictModel for scenario collection");
+      //console.log("Invoking strictModel for scenario collection");
       const response = await strictModel.invoke([new HumanMessage(collectorPrompt)]);
-      console.log("strictModel response:", JSON.stringify(response, null, 2));
+      //console.log("strictModel response:", JSON.stringify(response, null, 2));
       relevantScenarios = response.scenarios;
     }
 
-    console.log("Relevant scenarios:", JSON.stringify(relevantScenarios, null, 2));
+    //console.log("Relevant scenarios:", JSON.stringify(relevantScenarios, null, 2));
 
     let validatedScenarios: string[] = [];
 
     if (relevantScenarios.length > 0) {
-      console.log("Creating validatorModel");
+      //console.log("Creating validatorModel");
       const validatorModel = openai.withStructuredOutput(scenarioValidatorSchema);
 
-      console.log("Invoking memoryValidator");
+      //console.log("Invoking memoryValidator");
       validatedScenarios = await memoryValidator(relevantScenarios, sentMessage, replyMessage, validatorModel);
-      console.log("Validated scenarios:", JSON.stringify(validatedScenarios, null, 2));
+      //console.log("Validated scenarios:", JSON.stringify(validatedScenarios, null, 2));
     } else {
-      console.log("No relevant scenarios identified, skipping validation.");
+      //console.log("No relevant scenarios identified, skipping validation.");
     }
 
-    console.log("Filtering selected memories");
+    //console.log("Filtering selected memories");
     const selectedMemories = learningMemories.filter(memory => {
       const isIncluded = validatedScenarios.includes(memory.scenario);
-      console.log(`Memory scenario: ${memory.scenario}, Included: ${isIncluded}`);
+      //console.log(`Memory scenario: ${memory.scenario}, Included: ${isIncluded}`);
       return isIncluded;
     });
 
-    console.log("Selected memories:", JSON.stringify(selectedMemories, null, 2));
+    //console.log("Selected memories:", JSON.stringify(selectedMemories, null, 2));
+
+    let actorMemoryKey: string;
+    switch (nextStep) {
+      case "numberOfResponsesIdentifier":
+        actorMemoryKey = "numberOfResponsesIdentifierMemory";
+        break;
+      case "firstResponseGenerator":
+        actorMemoryKey = "firstResponseGeneratorMemory";
+        break;
+      case "firstResponseValidator":
+        actorMemoryKey = "firstResponseValidatorMemory";
+        break;
+      default:
+        actorMemoryKey = "unknownActorMemory";
+    }
 
     return { 
       currentStep: nextStep,
       nextStep: getNextStep(nextStep),
-      selectedMemories: selectedMemories
+      selectedMemories: selectedMemories,
+      [actorMemoryKey]: selectedMemories
     };
   } catch (error) {
     console.error("Memory Mapping Agent - Unexpected error:", error);

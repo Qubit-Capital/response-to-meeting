@@ -9,15 +9,15 @@ const numberOfResponsesSchema = z.object({
 });
 
 export async function numberOfResponsesIdentifier(state: typeof AgentState.State) {
-  console.log("state in numberOfResponsesIdentifier:", state);
+  //console.log("state in numberOfResponsesIdentifier:", state);
   try {
     const { sentMessage, replyMessage, selectedMemories, currentStep } = state;
 
-    console.log("Number of Responses Identifier - Reply Message:", replyMessage);
+    //console.log("Number of Responses Identifier - Reply Message:", replyMessage);
     
     // Extract only the instructions from selected memories
     const relevantInstructions = selectedMemories.map(memory => memory.instruction);
-    console.log("Relevant Instructions:", JSON.stringify(relevantInstructions, null, 2));
+    //console.log("Relevant Instructions:", JSON.stringify(relevantInstructions, null, 2));
 
     const strictModel = openai.withStructuredOutput(numberOfResponsesSchema);
 
